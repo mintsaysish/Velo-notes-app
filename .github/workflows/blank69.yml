@@ -1,0 +1,29 @@
+name: Auto Unzip
+on:
+  push:
+    paths:
+      - '**.zip' # Triggers when a zip file is pushed
+
+jobs:
+  unzip-file:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Archive
+        uses: ihiroky/extract-action@v1
+        with:
+          file_path: './your-file.zip' # Path to your zip file
+          extract_dir: './extracted-folder' # Destination directory
+
+      - name: Commit Extracted Files
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git rm -f your-file.zip
+          git add .
+          git commit -m "Automatically unzipped archive"
+          git push
