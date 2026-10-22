@@ -24,15 +24,32 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
+        with:
+          packages: '' # Skips problematic sdkmanager package checks
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew || true
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          echo "Searching for gradlew..."
+          GRADLEW_FILE=$(find . -name "gradlew" -type f | head -n 1)
+          
+          if [ -z "$GRADLEW_FILE" ]; then
+            echo "Error: gradlew file could not be found in the repository!"
+            exit 1
+          fi
+          
+          echo "Found gradlew at: $GRADLEW_FILE"
+          
+          # Get the directory where gradlew resides
+          PROJECT_DIR=$(dirname "$GRADLEW_FILE")
+          echo "Changing directory to: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          
+          # Grant permissions and run build
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -40,3 +57,4 @@ jobs:
           name: VeloNoteStudio-debug-apk
           path: '**/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
+          
